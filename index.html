@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<title>PawnPal — Companion</title>
+<title>PawnPal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -147,20 +147,26 @@
   .btn-secondary:active { transform: translateY(2px); box-shadow: 0 0 0 var(--border); }
 
   /* session */
-  .session-head { width: 100%; max-width: 480px; padding: 24px 22px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .session-day { font-family: 'Libre Baskerville', serif; font-size: 26px; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; }
+  .session-head { width: 100%; max-width: 480px; padding: 24px 22px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; position: relative; }
+  .session-day { font-family: 'Libre Baskerville', serif; font-size: 26px; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; line-height: 1; }
   .session-phase { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
-  #session-body { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; }
 
-  #push-badge {
-    display: none; align-items: center; justify-content: center; gap: 8px;
-    width: calc(100% - 32px); max-width: 448px; margin: 12px 16px 0;
-    padding: 9px 14px; border: 1px solid var(--accent-light); border-radius: 5px;
-    background: rgba(196,94,48,0.10); color: var(--accent);
-    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  .session-avatar {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px; height: 60px;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+    background: rgba(232, 222, 200, 0.55);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 0 var(--border-soft);
   }
-  #push-badge.show { display: flex; }
-  .push-die { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 1.5px solid var(--accent); border-radius: 4px; font-size: 11px; line-height: 1; }
+  .session-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .session-avatar .avatar-placeholder { width: 70%; height: 70%; color: var(--border); }
+  #session-body { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; }
 
   .step-card { padding: 28px 22px 24px; margin: 18px 16px 0; max-width: 448px; text-align: center; }
   .step-eyebrow { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; position: relative; z-index: 1; }
@@ -217,6 +223,7 @@
   .test-num-cell + .test-num-cell { border-left: 0.5px solid var(--border); }
   .test-num { font-family: 'Courier Prime', monospace; font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1.05; font-variant-numeric: tabular-nums; }
   .test-cap { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .test-push-note { font-size: 8.5px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700; font-style: italic; }
   .test-source { margin-top: 8px; font-size: 10.5px; color: var(--muted); letter-spacing: 0.04em; }
   .test-source b { color: var(--ink); font-weight: 700; }
 
@@ -561,7 +568,7 @@
     </div>
   </main>
   <footer>
-    <span>v1.9.2 · welcome polish</span>
+    <span>v1.11.1 · icon refresh</span>
     <span style="display:flex;gap:14px;align-items:center;">
       <button class="reset-link" id="btn-abandon">abandon Pal</button>
       <button class="reset-link" id="btn-reset">reset (testing)</button>
@@ -572,11 +579,11 @@
 <!-- SESSION -->
 <div class="screen" id="screen-session">
   <div class="session-head">
+    <div class="session-avatar" id="session-avatar"></div>
     <div class="session-day" id="session-day">Day 1</div>
     <div class="session-phase" id="session-phase">Camp</div>
   </div>
   <div class="divider"></div>
-  <div id="push-badge"><span class="push-die">+1</span><span>+1 to your roll today</span></div>
   <div id="session-body"></div>
 </div>
 
@@ -590,7 +597,7 @@
     <div class="card-shell about-card">
       <div class="about-title">Welcome Wanderer</div>
       <div class="about-body">
-        <p>Your Pal is the figure you brought — a mini, a token, a photo of something you care about. They travel a road. Each day brings one event. You roll the d10 to see how it lands.</p>
+        <p>Your Pal is the figure you brought: a mini, a token, a photo of something you care about. They travel a road. Each day brings one event. You roll the d10 to see how it lands.</p>
         <p>Will you accept your day's fate, or take a gamble before the day is done?</p>
         <p>Most Pals fall. Some last for weeks. A rare few make it to retirement. Either way, their story joins the others when their run ends.</p>
         <p>When you're ready, name your Pal. Add a photo if you'd like. Then begin.</p>
@@ -613,7 +620,7 @@
     <div class="card-shell about-card">
       <div class="about-title">PawnPal</div>
       <div class="about-body">
-        <p>Your Pal is the figure you brought — a mini, a token, a photo of something you care about. They travel a road. Each day brings one event. You roll the d10 to see how it lands.</p>
+        <p>Your Pal is the figure you brought: a mini, a token, a photo of something you care about. They travel a road. Each day brings one event. You roll the d10 to see how it lands.</p>
         <p>Will you accept your day's fate, or take a gamble before the day is done?</p>
         <p>Most Pals fall. Some last for weeks. A rare few make it to retirement. Either way, their story joins the others when their run ends.</p>
         <p>When you're ready, name your Pal. Add a photo if you'd like. Then begin.</p>
@@ -632,7 +639,7 @@
   <div class="card-shell rules" style="margin:18px 16px 0;max-width:448px;">
     <div class="r-sec">
       <div class="r-head">Session</div>
-      <div class="r-line"><span class="r-num">1</span>Camp Phase — choose one activity</div>
+      <div class="r-line"><span class="r-num">1</span>Camp Phase: choose one activity</div>
       <div class="r-line"><span class="r-num">2</span>Draw event card</div>
       <div class="r-line"><span class="r-num">3</span>Roll 1d10 + stat modifier vs tier threshold</div>
       <div class="r-line"><span class="r-num">4</span>Double or Nothing (optional)</div>
@@ -642,10 +649,10 @@
     <div class="r-sec two-col">
       <div>
         <div class="r-head">Camp Activities</div>
-        <div class="ca-line"><b>Rest</b> — 1 Food → +1 HP</div>
-        <div class="ca-line"><b>Push</b> — 1 HP → +1 to roll</div>
-        <div class="ca-line"><b>Scout</b> — 1 Morale → peek, keep or bury</div>
-        <div class="ca-line"><b>Meditate</b> — free → +1 Morale</div>
+        <div class="ca-line"><b>Rest</b>: 1 Food → +1 HP</div>
+        <div class="ca-line"><b>Push</b>: 1 HP → +1 to roll</div>
+        <div class="ca-line"><b>Scout</b>: 1 Morale → peek, keep or bury</div>
+        <div class="ca-line"><b>Meditate</b>: free → +1 Morale</div>
       </div>
       <div>
         <div class="r-head">Modifier</div>
@@ -659,17 +666,17 @@
     </div>
     <div class="r-sec">
       <div class="r-head">Double or Nothing</div>
-      <div class="don-line"><span class="pass-c">Pass →</span> Press Your Luck — pass = ×2 gains · fail = lose all gains</div>
-      <div class="don-line"><span class="fail-c">Fail →</span> Fight Back — pass = full recovery · fail = ×2 losses</div>
+      <div class="don-line"><span class="pass-c">Pass →</span> Press Your Luck: pass = ×2 gains · fail = lose all gains</div>
+      <div class="don-line"><span class="fail-c">Fail →</span> Fight Back: pass = full recovery · fail = ×2 losses</div>
       <div class="don-note">Same stat · same modifier · Fight Back win ≠ progress</div>
     </div>
     <div class="r-sec">
       <div class="r-head">Tiers</div>
       <div class="tier-grid">
-        <div class="tier-line"><span class="tn">Wanderer</span> — 4+ — max 10</div>
-        <div class="tier-line"><span class="tn">Legend</span> — 8+ — max 30</div>
-        <div class="tier-line"><span class="tn">Adventurer</span> — 6+ — max 20</div>
-        <div class="tier-line"><span class="tn">Retired</span> — — —</div>
+        <div class="tier-line"><span class="tn">Wanderer</span> · 4+ · max 10</div>
+        <div class="tier-line"><span class="tn">Legend</span> · 8+ · max 30</div>
+        <div class="tier-line"><span class="tn">Adventurer</span> · 6+ · max 20</div>
+        <div class="tier-line"><span class="tn">Retired</span> · — · —</div>
       </div>
     </div>
     <div class="r-sec">
@@ -906,7 +913,7 @@ async function handlePhotoUpload(file) {
     if (!saveState()) {
       pal().photo = prev;
       saveState();
-      toast('Photo too large — try a smaller image.');
+      toast('Photo too large. Try a smaller image.');
       return;
     }
     renderAvatar();
@@ -986,7 +993,7 @@ function abandonPal() {
   const days = p.daysSurvived;
   const msg = hadInvestment
     ? 'Abandon ' + label + '?\n\nTheir record will be archived to Past PawnPals (' + p.tier + ', ' + days + ' day' + (days === 1 ? '' : 's') + '). A new Pal will begin.'
-    : 'Reset to a new Pal? Nothing has been written yet — no record will be archived.';
+    : 'Reset to a new Pal? Nothing has been written yet. No record will be archived.';
   if (!confirm(msg)) return;
   concludePal('abandoned');
   render();
@@ -1113,9 +1120,15 @@ function goFallen() { state.session.phase = 'fallen'; saveState(); renderPhase()
 function updateSessionHead() {
   document.getElementById('session-day').textContent = 'Day ' + state.session.day;
   document.getElementById('session-phase').textContent = PHASE_LABEL[state.session.phase] || '';
-  const badge = document.getElementById('push-badge');
-  const live = state.session.pushReminder && state.session.phase === 'event';
-  badge.classList.toggle('show', !!live);
+
+  // Session avatar: same logic as the home-sheet avatar but smaller.
+  // Shows the player's photo if set, the d10 silhouette if not.
+  const sav = document.getElementById('session-avatar');
+  if (pal().photo) {
+    sav.innerHTML = '<img src="' + pal().photo + '" alt="">';
+  } else {
+    sav.innerHTML = D10_SVG;
+  }
 }
 
 /* Camp */
@@ -1131,7 +1144,7 @@ function isCampBlocked(act) {
 function chooseCamp(act) {
   if (isCampBlocked(act)) return; // no-op safeguard, the button is disabled anyway
   if (act.costStat && pal()[act.costStat] === 1) {
-    if (!confirm('This costs 1 ' + act.costStat + ', dropping it to 0 — your Pal will fall. Take this anyway?')) return;
+    if (!confirm('This costs 1 ' + act.costStat + ', dropping it to 0. Your Pal will fall. Take this anyway?')) return;
   }
   Object.keys(act.deltas).forEach(s => applyDelta(s, act.deltas[s]));
   state.session.camp = act.id;
@@ -1158,7 +1171,7 @@ function buildStatsBar() {
 function renderCamp(body) {
   const card = document.createElement('div'); card.className = 'card-shell camp-card';
   card.appendChild(buildStatsBar());
-  const intro = document.createElement('div'); intro.className = 'camp-intro'; intro.textContent = 'Make camp. Choose one — each is a real tradeoff.';
+  const intro = document.createElement('div'); intro.className = 'camp-intro'; intro.textContent = 'Make camp. Choose one.';
   card.appendChild(intro);
 
   const list = document.createElement('div'); list.className = 'camp-list';
@@ -1224,7 +1237,9 @@ function buildEventCard(c) {
   card.appendChild(title); card.appendChild(sit);
 
   const v = pal()[c.stat];
-  const mod = modifierFor(v);
+  const baseMod = modifierFor(v);
+  const pushActive = !!state.session.pushReminder;
+  const mod = baseMod + (pushActive ? 1 : 0);
   const panel = document.createElement('div'); panel.className = 'test-panel';
   const eye = document.createElement('div'); eye.className = 'test-eyebrow';
   eye.innerHTML = '<span class="test-stat">' + c.stat + '</span> Test';
@@ -1232,7 +1247,8 @@ function buildEventCard(c) {
   const nums = document.createElement('div'); nums.className = 'test-numbers';
   const cell1 = document.createElement('div'); cell1.className = 'test-num-cell';
   const n1 = document.createElement('div'); n1.className = 'test-num'; n1.textContent = fmtSigned(mod);
-  const c1 = document.createElement('div'); c1.className = 'test-cap'; c1.textContent = 'Modifier';
+  const c1 = document.createElement('div'); c1.className = 'test-cap';
+  c1.innerHTML = 'Modifier' + (pushActive ? '<br><span class="test-push-note">includes +1 from Push</span>' : '');
   cell1.appendChild(n1); cell1.appendChild(c1);
   const cell2 = document.createElement('div'); cell2.className = 'test-num-cell';
   const n2 = document.createElement('div'); n2.className = 'test-num'; n2.textContent = TIER_THRESHOLD[pal().tier];
@@ -1370,7 +1386,7 @@ function renderEvent(body) {
   const c = cardById(state.session.card);
   const scoutingUnlocked = state.session.scouting && !state.session.cardLocked;
   if (scoutingUnlocked) {
-    const eyebrow = document.createElement('div'); eyebrow.className = 'scout-eyebrow'; eyebrow.textContent = 'Scouted — keep this card, or bury it for the next';
+    const eyebrow = document.createElement('div'); eyebrow.className = 'scout-eyebrow'; eyebrow.textContent = 'Scouted: keep this card or bury it for the next.';
     body.appendChild(eyebrow);
   }
   body.appendChild(buildEventCard(c));
@@ -1458,7 +1474,7 @@ function applyFinalAndFinish(gambleResult) {
 function renderDonOffer(body) {
   const card = document.createElement('div'); card.className = 'card-shell don-card';
   card.appendChild(buildStatsBar());
-  const eye = document.createElement('div'); eye.className = 'don-eyebrow'; eye.textContent = 'Step 4 — Double or Nothing';
+  const eye = document.createElement('div'); eye.className = 'don-eyebrow'; eye.textContent = 'Step 4 · Double or Nothing';
   const resolved = state.session.resolved;
   const title = document.createElement('div');
   title.className = 'don-title ' + (resolved === 'pass' ? 'pass-c' : 'fail-c');
@@ -1539,7 +1555,10 @@ function renderDonResolve(body) {
   wrap.appendChild(title); wrap.appendChild(sit);
 
   // test panel (same modifier + threshold as the original event roll)
-  const v = pal()[card.stat]; const mod = modifierFor(v);
+  const v = pal()[card.stat];
+  const baseMod = modifierFor(v);
+  const pushActive = !!state.session.pushReminder;
+  const mod = baseMod + (pushActive ? 1 : 0);
   const panel = document.createElement('div'); panel.className = 'test-panel';
   const eye = document.createElement('div'); eye.className = 'test-eyebrow';
   eye.innerHTML = '<span class="test-stat">' + card.stat + '</span> Test  ·  Same modifier, same threshold';
@@ -1547,7 +1566,8 @@ function renderDonResolve(body) {
   const nums = document.createElement('div'); nums.className = 'test-numbers';
   const cell1 = document.createElement('div'); cell1.className = 'test-num-cell';
   const n1 = document.createElement('div'); n1.className = 'test-num'; n1.textContent = fmtSigned(mod);
-  const c1 = document.createElement('div'); c1.className = 'test-cap'; c1.textContent = 'Modifier';
+  const c1 = document.createElement('div'); c1.className = 'test-cap';
+  c1.innerHTML = 'Modifier' + (pushActive ? '<br><span class="test-push-note">includes +1 from Push</span>' : '');
   cell1.appendChild(n1); cell1.appendChild(c1);
   const cell2 = document.createElement('div'); cell2.className = 'test-num-cell';
   const n2 = document.createElement('div'); n2.className = 'test-num'; n2.textContent = TIER_THRESHOLD[pal().tier];

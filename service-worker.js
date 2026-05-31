@@ -2,7 +2,7 @@
 // Strategy: cache-first for app shell, network fallback, last-known good when offline.
 // To ship a new version: bump CACHE_VERSION below and re-deploy.
 
-const CACHE_VERSION = 'pawnpal-v1.8';
+const CACHE_VERSION = 'pawnpal-v1.11';
 const CORE_ASSETS = [
   './',
   './index.html',
