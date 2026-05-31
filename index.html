@@ -350,6 +350,11 @@
     border-top: 0.5px dashed currentColor;
   }
   .don-stake-row { display: flex; align-items: baseline; gap: 10px; font-size: 11.5px; line-height: 1.3; }
+  .don-kill-warn {
+    font-size: 9px; letter-spacing: 0.14em; color: var(--fail);
+    font-weight: 700; font-style: italic; text-transform: uppercase;
+    margin-left: auto;
+  }
   .don-stake-label { font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 9.5px; min-width: 56px; }
   .don-stake-label.win { color: var(--pass); }
   .don-stake-label.lose { color: var(--fail); }
@@ -460,7 +465,7 @@
   }
   .past-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .past-portrait .avatar-placeholder { width: 55%; height: 55%; color: var(--border); }
-  .past-portrait.retired { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(196,94,48,0.25); }
+  .past-portrait.retired { border-color: #b8893d; box-shadow: inset 0 0 0 1px rgba(184,137,61,0.25); }
 
   .past-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
   .past-name {
@@ -468,7 +473,10 @@
     font-size: 17px; font-weight: 700; color: var(--ink);
     line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .past-name.retired { color: var(--accent); }
+  /* Name color matches cause-verb color for fast visual scan */
+  .past-name.died { color: var(--fail); }
+  .past-name.retired { color: #b8893d; }   /* rusted gold — between rust and ink */
+  .past-name.abandoned { color: var(--muted); }
 
   .past-meta {
     font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
@@ -481,9 +489,17 @@
     font-weight: 700;
   }
   .past-meta .past-cause.died { color: var(--fail); }
-  .past-meta .past-cause.retired { color: var(--accent); }
+  .past-meta .past-cause.retired { color: #b8893d; }   /* matches name */
   .past-meta .past-cause.abandoned { color: var(--muted); }
   .past-meta .past-dot { color: var(--border); }
+
+  /* End-of-run final stats — a quiet small-caps line under the meta */
+  .past-final {
+    font-size: 10px; color: var(--muted); letter-spacing: 0.08em;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .past-final b { color: var(--ink); font-weight: 700; }
 
   .past-notes {
     font-family: 'Libre Baskerville', serif; font-style: italic;
@@ -568,7 +584,7 @@
     </div>
   </main>
   <footer>
-    <span>v1.11.1 · icon refresh</span>
+    <span>v1.12 · graveyard + warnings</span>
     <span style="display:flex;gap:14px;align-items:center;">
       <button class="reset-link" id="btn-abandon">abandon Pal</button>
       <button class="reset-link" id="btn-reset">reset (testing)</button>
@@ -960,6 +976,7 @@ function concludePal(cause) {
       daysSurvived: p.daysSurvived,
       cause: cause,
       notes: trimmedNotes,
+      finalStats: { HP: p.HP, Morale: p.Morale, Food: p.Food },
       endedAt: Date.now()
     });
   }
@@ -1492,12 +1509,31 @@ function renderDonOffer(body) {
   const stakes = gambleStakes(cardData, resolved);
   const lockedDelta = (resolved === 'pass') ? cardData.passDelta : cardData.failDelta;
 
+  // Death detection: apply a delta against current stats and check if any
+  // stat would land at or below zero. Caps the projection at the tier max
+  // for positive deltas (consistent with the engine's clamping).
+  const cap = maxFor();
+  function wouldKill(delta) {
+    for (const s of STATS) {
+      const projected = Math.min(cap, pal()[s] + (delta[s] || 0));
+      if (projected <= 0) return true;
+    }
+    return false;
+  }
+  const acceptKills = (resolved === 'fail') && wouldKill(lockedDelta);
+  const fightBackLoseKills = (resolved === 'fail') && wouldKill(stakes.loseDelta);
+
   // Helper for a stake row
-  function stakeRow(labelText, labelClass, deltaObj) {
+  function stakeRow(labelText, labelClass, deltaObj, warnKill) {
     const r = document.createElement('div'); r.className = 'don-stake-row';
     const l = document.createElement('span'); l.className = 'don-stake-label ' + labelClass; l.textContent = labelText;
     const v = document.createElement('span'); v.className = 'don-stake-val'; v.textContent = deltaText(deltaObj);
     r.appendChild(l); r.appendChild(v);
+    if (warnKill) {
+      const w = document.createElement('span'); w.className = 'don-kill-warn';
+      w.textContent = 'ends your run';
+      r.appendChild(w);
+    }
     return r;
   }
 
@@ -1511,8 +1547,8 @@ function renderDonOffer(body) {
     ? 'Roll again at the same threshold. Win doubles your gains; lose wipes them.'
     : 'Roll again at the same threshold. Win recovers your losses; lose doubles them.';
   const gStakes = document.createElement('div'); gStakes.className = 'don-opt-stakes';
-  gStakes.appendChild(stakeRow('Win',  'win',  stakes.winDelta));
-  gStakes.appendChild(stakeRow('Lose', 'lose', stakes.loseDelta));
+  gStakes.appendChild(stakeRow('Win',  'win',  stakes.winDelta, false));
+  gStakes.appendChild(stakeRow('Lose', 'lose', stakes.loseDelta, fightBackLoseKills));
   gamble.appendChild(gName); gamble.appendChild(gDesc); gamble.appendChild(gStakes);
   gamble.onclick = () => chooseDon('gamble');
 
@@ -1523,7 +1559,7 @@ function renderDonOffer(body) {
   const aDesc = document.createElement('div'); aDesc.className = 'don-opt-desc';
   aDesc.textContent = 'Take the outcome as it stands.';
   const aStakes = document.createElement('div'); aStakes.className = 'don-opt-stakes';
-  aStakes.appendChild(stakeRow('Locks in', 'lock', lockedDelta));
+  aStakes.appendChild(stakeRow('Locks in', 'lock', lockedDelta, acceptKills));
   accept.appendChild(aName); accept.appendChild(aDesc); accept.appendChild(aStakes);
   accept.onclick = () => chooseDon('accept');
 
@@ -1775,7 +1811,7 @@ function renderPastPals() {
     const body = document.createElement('div'); body.className = 'past-body';
 
     const name = document.createElement('div');
-    name.className = 'past-name' + (e.cause === 'retired' ? ' retired' : '');
+    name.className = 'past-name ' + e.cause;
     name.textContent = e.name || 'Unnamed Pal';
 
     const meta = document.createElement('div'); meta.className = 'past-meta';
@@ -1794,6 +1830,15 @@ function renderPastPals() {
     meta.innerHTML = daysSpan + '<span class="past-dot">·</span>' + causeSpan + ' as ' + article + ' ' + tierSpan;
 
     body.appendChild(name); body.appendChild(meta);
+
+    // Final-stats line — only present on Pals archived from this build onward.
+    // Older records have no finalStats; rendering is skipped gracefully.
+    if (e.finalStats) {
+      const fs = e.finalStats;
+      const final = document.createElement('div'); final.className = 'past-final';
+      final.innerHTML = 'HP <b>' + fs.HP + '</b> · Morale <b>' + fs.Morale + '</b> · Food <b>' + fs.Food + '</b>';
+      body.appendChild(final);
+    }
 
     if (e.notes && e.notes.trim()) {
       const notes = document.createElement('div'); notes.className = 'past-notes'; notes.textContent = e.notes.trim();
