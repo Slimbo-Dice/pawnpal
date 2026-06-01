@@ -148,6 +148,24 @@
   .pbox.filled::after { content: '✦'; font-size: 13px; position: absolute; }
   .pbox.filled span { display: none; }
 
+  /* Session-level progress row: sits ABOVE the stats bar (same visual language as .pbox but compact, no glyph) */
+  .session-progress {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 10px; padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border-soft);
+  }
+  .session-progress-label {
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700;
+  }
+  .session-progress-dots { display: flex; gap: 3px; }
+  .session-pbox {
+    width: 10px; height: 10px;
+    border: 0.5px solid var(--border); border-radius: 2px;
+    background: rgba(255,255,255,0.35);
+  }
+  .session-pbox.filled { background: var(--accent); border-color: var(--accent-deep); }
+
   .meta-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 0.5px solid var(--border-soft); }
   .days-label { font-size: 9px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; }
   .days-value { font-size: 22px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -241,6 +259,7 @@
   .test-num { font-family: 'Courier Prime', monospace; font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1.05; font-variant-numeric: tabular-nums; }
   .test-cap { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
   .test-push-note { font-size: 8.5px; letter-spacing: 0.06em; color: var(--accent); font-weight: 700; font-style: italic; }
+  .test-add-hint { font-size: 8.5px; letter-spacing: 0.06em; color: var(--muted); font-style: italic; }
   .test-source { margin-top: 8px; font-size: 10.5px; color: var(--muted); letter-spacing: 0.04em; }
   .test-source b { color: var(--ink); font-weight: 700; }
 
@@ -1203,6 +1222,22 @@ function chooseCamp(act) {
 }
 /* Shared: state-at-a-glance bar shown on every decision screen */
 function buildStatsBar() {
+  const wrap = document.createElement('div');
+
+  // Progress row first (above the stats). Reads pal().progress; pass-roll
+  // increments it immediately, so the Gamble screen reflects the new value.
+  const pr = document.createElement('div'); pr.className = 'session-progress';
+  const prLabel = document.createElement('span'); prLabel.className = 'session-progress-label'; prLabel.textContent = 'Progress';
+  const prDots = document.createElement('div'); prDots.className = 'session-progress-dots';
+  for (let i = 0; i < 10; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'session-pbox' + (i < pal().progress ? ' filled' : '');
+    prDots.appendChild(dot);
+  }
+  pr.appendChild(prLabel); pr.appendChild(prDots);
+  wrap.appendChild(pr);
+
+  // Stats row second
   const bar = document.createElement('div'); bar.className = 'camp-stats-bar';
   const m = maxFor();
   STATS.forEach(s => {
@@ -1212,7 +1247,9 @@ function buildStatsBar() {
     val.innerHTML = pal()[s] + '<span class="camp-stat-cap">/' + (m === Infinity ? '—' : m) + '</span>';
     cell.appendChild(lab); cell.appendChild(val); bar.appendChild(cell);
   });
-  return bar;
+  wrap.appendChild(bar);
+
+  return wrap;
 }
 
 function renderCamp(body) {
@@ -1295,7 +1332,7 @@ function buildEventCard(c) {
   const cell1 = document.createElement('div'); cell1.className = 'test-num-cell';
   const n1 = document.createElement('div'); n1.className = 'test-num'; n1.textContent = fmtSigned(mod);
   const c1 = document.createElement('div'); c1.className = 'test-cap';
-  c1.innerHTML = 'Modifier' + (pushActive ? '<br><span class="test-push-note">includes +1 from Push</span>' : '');
+  c1.innerHTML = 'Modifier<br><span class="test-add-hint">add to your roll</span>' + (pushActive ? '<br><span class="test-push-note">includes +1 from Push</span>' : '');
   cell1.appendChild(n1); cell1.appendChild(c1);
   const cell2 = document.createElement('div'); cell2.className = 'test-num-cell';
   const n2 = document.createElement('div'); n2.className = 'test-num'; n2.textContent = TIER_THRESHOLD[pal().tier];
@@ -1521,16 +1558,15 @@ function applyFinalAndFinish(gambleResult) {
 function renderDonOffer(body) {
   const card = document.createElement('div'); card.className = 'card-shell don-card';
   card.appendChild(buildStatsBar());
-  const eye = document.createElement('div'); eye.className = 'don-eyebrow'; eye.textContent = 'Step 4 · Double or Nothing';
   const resolved = state.session.resolved;
   const title = document.createElement('div');
   title.className = 'don-title ' + (resolved === 'pass' ? 'pass-c' : 'fail-c');
   title.textContent = resolved === 'pass' ? 'You passed.' : 'You failed.';
   const prompt = document.createElement('div'); prompt.className = 'don-prompt';
   prompt.textContent = resolved === 'pass'
-    ? 'Press your luck for double, or accept what you earned.'
+    ? "Press your luck for double, or accept the win. Your Pal's progress holds either way."
     : 'Fight back for a chance to recover, or accept the loss.';
-  card.appendChild(eye); card.appendChild(title); card.appendChild(prompt);
+  card.appendChild(title); card.appendChild(prompt);
 
   const opts = document.createElement('div'); opts.className = 'don-opts';
 
@@ -1585,12 +1621,15 @@ function renderDonOffer(body) {
   gamble.appendChild(gName); gamble.appendChild(gDesc); gamble.appendChild(gStakes);
   gamble.onclick = () => chooseDon('gamble');
 
-  // Accept Fate
+  // Accept (the win or the loss)
   const accept = document.createElement('button');
   accept.className = 'don-opt accept';
-  const aName = document.createElement('div'); aName.className = 'don-opt-name'; aName.textContent = 'Accept Fate';
+  const aName = document.createElement('div'); aName.className = 'don-opt-name';
+  aName.textContent = resolved === 'pass' ? 'Accept The Win' : 'Accept The Loss';
   const aDesc = document.createElement('div'); aDesc.className = 'don-opt-desc';
-  aDesc.textContent = 'Take the outcome as it stands.';
+  aDesc.textContent = resolved === 'pass'
+    ? 'Take the win and move on.'
+    : 'Take the loss and move on.';
   const aStakes = document.createElement('div'); aStakes.className = 'don-opt-stakes';
   aStakes.appendChild(stakeRow('Locks in', 'lock', lockedDelta, acceptKills));
   accept.appendChild(aName); accept.appendChild(aDesc); accept.appendChild(aStakes);
@@ -1611,7 +1650,7 @@ function renderDonResolve(body) {
   wrap.appendChild(buildStatsBar());
   const meta = document.createElement('div'); meta.className = 'event-meta';
   const num = document.createElement('span'); num.className = 'event-number';
-  num.textContent = (resolved === 'pass' ? 'Press Your Luck' : 'Fight Back') + ' · #' + String(card.id).padStart(2, '0');
+  num.textContent = '#' + String(card.id).padStart(2, '0');
   meta.appendChild(num);
   wrap.appendChild(meta);
 
@@ -1636,7 +1675,7 @@ function renderDonResolve(body) {
   const cell1 = document.createElement('div'); cell1.className = 'test-num-cell';
   const n1 = document.createElement('div'); n1.className = 'test-num'; n1.textContent = fmtSigned(mod);
   const c1 = document.createElement('div'); c1.className = 'test-cap';
-  c1.innerHTML = 'Modifier' + (pushActive ? '<br><span class="test-push-note">includes +1 from Push</span>' : '');
+  c1.innerHTML = 'Modifier<br><span class="test-add-hint">add to your roll</span>' + (pushActive ? '<br><span class="test-push-note">includes +1 from Push</span>' : '');
   cell1.appendChild(n1); cell1.appendChild(c1);
   const cell2 = document.createElement('div'); cell2.className = 'test-num-cell';
   const n2 = document.createElement('div'); n2.className = 'test-num'; n2.textContent = TIER_THRESHOLD[pal().tier];
@@ -1696,11 +1735,11 @@ function dayEndCopy() {
   if (gambled && resolved === 'fail' && net < 0) {
     return 'The day takes its second cut. You make camp battered, what is left of you.';
   }
-  // Accept Fate on a pass
+  // Accept The Win
   if (!gambled && resolved === 'pass') {
     return 'A small win, taken without greed. You make camp content.';
   }
-  // Accept Fate on a fail
+  // Accept The Loss
   if (!gambled && resolved === 'fail') {
     return 'You take the loss as it came. Tomorrow asks no questions of today.';
   }
@@ -1710,11 +1749,10 @@ function dayEndCopy() {
 
 function renderDayEnd(body) {
   const card = document.createElement('div'); card.className = 'card-shell step-card';
-  const eye = document.createElement('div'); eye.className = 'step-eyebrow'; eye.textContent = "Day's End";
   const t = document.createElement('div'); t.className = 'step-title'; t.textContent = 'The day is done.';
   const n = document.createElement('div'); n.className = 'step-note'; n.textContent = dayEndCopy();
   const b = document.createElement('button'); b.className = 'btn-primary'; b.textContent = 'Return to your Pal'; b.onclick = finishDay;
-  card.appendChild(eye); card.appendChild(t); card.appendChild(n); card.appendChild(b);
+  card.appendChild(t); card.appendChild(n); card.appendChild(b);
   body.appendChild(card);
 }
 
