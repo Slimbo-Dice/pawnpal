@@ -7,23 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="PawnPal">
-
-<!-- Open Graph: link preview metadata for Discord, iMessage, Facebook, etc. -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="PawnPal">
-<meta property="og:description" content="A small game for one. Bring a mini, a token, or a photo of something you care about. They travel a road. Each day, one event. Roll the d10 to see how it lands. Most Pals fall. Some last for weeks. A rare few make it to retirement.">
-<meta property="og:image" content="https://slimbo-dice.github.io/pawnpal/icon-512.png">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
-<meta property="og:url" content="https://slimbo-dice.github.io/pawnpal/">
-<meta property="og:site_name" content="PawnPal">
-
-<!-- Twitter Card: used by Twitter, iMessage, LinkedIn, and others -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PawnPal">
-<meta name="twitter:description" content="A small game for one. Bring a mini, a token, or a photo of something you care about. They travel a road. Each day, one event. Roll the d10 to see how it lands.">
-<meta name="twitter:image" content="https://slimbo-dice.github.io/pawnpal/icon-512.png">
-
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -723,7 +706,7 @@
 <div class="screen" id="screen-past">
   <div class="topbar">
     <button class="back-btn" id="back-past" aria-label="back">←</button>
-    <span class="topbar-title">Past Pals</span>
+    <span class="topbar-title">Past PawnPals</span>
   </div>
   <div class="divider"></div>
   <div class="past-wrap" id="past-list"></div>
@@ -975,7 +958,7 @@ function startDay() {
 }
 
 /* ── Conclusion (step 5) ──
-   Archive the active Pal to Past Pals (when they had any commitment),
+   Archive the active Pal to Past PawnPals (when they had any commitment),
    then reset the active slot to a fresh Pal. Three causes feed in:
    'died' (any stat hit 0), 'retired' (Legend completed 10 passes), and
    'abandoned' (player walked away from an alive Pal). */
@@ -1001,7 +984,7 @@ function concludePal(cause) {
   state.activePal = freshPal();
   state.session = null;
   if (!saveState()) {
-    toast('Storage near capacity — older Past Pals records may need pruning.');
+    toast('Storage near capacity — older Past PawnPals records may need pruning.');
   }
 }
 
@@ -1010,7 +993,7 @@ function beginNewPal() {
   const cause = isDead() ? 'died' : (isRetired() ? 'retired' : null);
   if (!cause) return;
   const verb = cause === 'died' ? 'fallen' : 'retired in triumph';
-  if (!confirm('Your Pal has ' + verb + '. Their record will be archived to Past Pals, and a new Pal will begin.\n\nContinue?')) return;
+  if (!confirm('Your Pal has ' + verb + '. Their record will be archived to Past PawnPals, and a new Pal will begin.\n\nContinue?')) return;
   concludePal(cause);
   render();
   showScreen('home');
@@ -1027,7 +1010,7 @@ function abandonPal() {
   const label = trimmedName || 'this Pal';
   const days = p.daysSurvived;
   const msg = hadInvestment
-    ? 'Abandon ' + label + '?\n\nTheir record will be archived to Past Pals (' + p.tier + ', ' + days + ' day' + (days === 1 ? '' : 's') + '). A new Pal will begin.'
+    ? 'Abandon ' + label + '?\n\nTheir record will be archived to Past PawnPals (' + p.tier + ', ' + days + ' day' + (days === 1 ? '' : 's') + '). A new Pal will begin.'
     : 'Reset to a new Pal? Nothing has been written yet. No record will be archived.';
   if (!confirm(msg)) return;
   concludePal('abandoned');
@@ -1076,7 +1059,7 @@ function validateImport(raw) {
   const s = parsed.state;
   if (!s || typeof s !== 'object') return { ok: false, reason: 'Save is missing its state.' };
   if (!s.activePal || typeof s.activePal !== 'object') return { ok: false, reason: 'Save is missing the active Pal.' };
-  if (!Array.isArray(s.pastPals)) return { ok: false, reason: 'Save is missing the Past Pals list.' };
+  if (!Array.isArray(s.pastPals)) return { ok: false, reason: 'Save is missing the Past PawnPals list.' };
 
   // Reconstitute the active Pal with fresh defaults for any missing fields,
   // so older exports import cleanly when new fields are added.
@@ -1120,7 +1103,7 @@ function importSave(file) {
     const palName = (result.state.activePal.name || '').trim() || 'Unnamed Pal';
     const msg = 'Import this save?\n\n' +
       'Active Pal: ' + palName + ' (' + result.state.activePal.tier + ')\n' +
-      'Past Pals: ' + archivedCount + '\n\n' +
+      'Past PawnPals: ' + archivedCount + '\n\n' +
       'This will overwrite your current save. Export first if you want to keep it.';
     if (!confirm(msg)) { toast('Import canceled.'); return; }
     state = result.state;
@@ -1732,10 +1715,8 @@ function placeholderCard(title, note, btnLabel, onBtn) {
 function renderFallen(body) {
   const card = document.createElement('div'); card.className = 'card-shell step-card';
   const eye = document.createElement('div'); eye.className = 'step-eyebrow'; eye.textContent = 'Run Ends';
-  const name = (pal().name || '').trim();
-  const titleText = name ? (name + ' Has Fallen') : 'Your Pal Has Fallen';
-  const t = document.createElement('div'); t.className = 'step-title fallen'; t.textContent = titleText;
-  const n = document.createElement('div'); n.className = 'step-note'; n.textContent = 'A stat reached zero. The road claims another. Their record will join the Past Pals when you return.';
+  const t = document.createElement('div'); t.className = 'step-title fallen'; t.textContent = 'Your Pal Has Fallen';
+  const n = document.createElement('div'); n.className = 'step-note'; n.textContent = 'A stat reached zero. The road claims another. Their record will join the Past PawnPals when you return.';
   const b = document.createElement('button'); b.className = 'btn-primary'; b.textContent = 'Return to your Pal'; b.onclick = finishDay;
   card.appendChild(eye); card.appendChild(t); card.appendChild(n); card.appendChild(b);
   body.appendChild(card);
@@ -1794,7 +1775,7 @@ function renderPhase() {
 
 function resumeIfNeeded() { if (state.session && state.session.active) { showScreen('session'); renderPhase(); } }
 
-/* ── Past Pals (step 6) ── */
+/* ── Past PawnPals (step 6) ── */
 /* d10 art (user-provided, cleaned: background path + 27 trace artifacts removed,
    6 art paths kept, proper viewBox added). Hardcoded rust/parchment fills sit
    correctly on every parchment-tinted UI background. */
@@ -1812,7 +1793,7 @@ const CAUSE_LABEL = { died: 'Fallen', retired: 'Retired', abandoned: 'Abandoned'
 function removeArchivedPal(idx) {
   const entry = state.pastPals[idx]; if (!entry) return;
   const name = entry.name || 'Unnamed Pal';
-  if (!confirm('Remove ' + name + ' from Past Pals?\n\nThis cannot be undone.')) return;
+  if (!confirm('Remove ' + name + ' from Past PawnPals?\n\nThis cannot be undone.')) return;
   state.pastPals.splice(idx, 1);
   saveState();
   renderPastPals();
