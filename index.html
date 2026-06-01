@@ -170,7 +170,7 @@
 
   .step-card { padding: 28px 22px 24px; margin: 18px 16px 0; max-width: 448px; text-align: center; }
   .step-eyebrow { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; position: relative; z-index: 1; }
-  .step-title { font-family: 'Libre Baskerville', serif; font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1.2; margin-bottom: 12px; position: relative; z-index: 1; }
+  .step-title { font-family: 'Libre Baskerville', serif; font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1.2; margin-bottom: 12px; position: relative; z-index: 1; overflow-wrap: break-word; word-break: normal; text-wrap: balance; max-width: 100%; }
   .step-title.fallen { color: var(--fail); }
   .step-title.advance-tier { font-size: 38px; color: var(--accent); letter-spacing: 0.04em; line-height: 1.1; }
   .step-title.retired-title { color: #b8893d; letter-spacing: 0.04em; }
@@ -585,7 +585,7 @@
     </div>
   </main>
   <footer>
-    <span>v1.12.3 · zoomable</span>
+    <span>v1.12.2 · security + ruleset</span>
     <span style="display:flex;gap:14px;align-items:center;">
       <button class="reset-link" id="btn-abandon">abandon Pal</button>
       <button class="reset-link" id="btn-reset">reset (testing)</button>
@@ -1723,13 +1723,22 @@ function renderFallen(body) {
 }
 
 /* Tier promotion — Wanderer→Adventurer or Adventurer→Legend */
+/* For closure-beat prose: use the named Pal when set, fall back to 'Your Pal'.
+   Returned with sentence-start capitalization (the calling sites place it at
+   the start of a sentence). */
+function palDisplayName() {
+  const name = (pal().name || '').trim();
+  return name || 'Your Pal';
+}
+
 function renderAdvance(body) {
   const newTier = state.session.advancedTo;
   const m = TIER_MAX[newTier];
   const card = document.createElement('div'); card.className = 'card-shell step-card';
   const eye = document.createElement('div'); eye.className = 'step-eyebrow'; eye.textContent = 'Tier Earned';
   const t = document.createElement('div'); t.className = 'step-title advance-tier'; t.textContent = newTier;
-  const n = document.createElement('div'); n.className = 'step-note'; n.textContent = 'Ten passes behind you. The road grows longer; your Pal grows with it.';
+  const n = document.createElement('div'); n.className = 'step-note';
+  n.textContent = 'Ten passes behind you. The road grows longer; ' + (pal().name?.trim() || 'your Pal') + ' grows with it.';
   const meta = document.createElement('div'); meta.className = 'advance-meta';
   meta.textContent = 'Pass ' + TIER_THRESHOLD[newTier] + '  ·  New stat max ' + (m === Infinity ? '—' : m);
   const b = document.createElement('button'); b.className = 'btn-primary'; b.textContent = 'Onward'; b.onclick = finishDay;
@@ -1742,7 +1751,8 @@ function renderRetired(body) {
   const card = document.createElement('div'); card.className = 'card-shell step-card';
   const eye = document.createElement('div'); eye.className = 'step-eyebrow'; eye.textContent = 'The Road Ends';
   const t = document.createElement('div'); t.className = 'step-title retired-title'; t.textContent = 'Retired';
-  const n = document.createElement('div'); n.className = 'step-note'; n.textContent = 'Your Pal has earned a place by the fire. The road is theirs to leave behind — and the story one worth telling.';
+  const n = document.createElement('div'); n.className = 'step-note';
+  n.textContent = palDisplayName() + ' has earned a place by the fire. The road is theirs to leave behind — and the story one worth telling.';
   const b = document.createElement('button'); b.className = 'btn-primary'; b.textContent = 'Return to your Pal'; b.onclick = finishDay;
   card.appendChild(eye); card.appendChild(t); card.appendChild(n); card.appendChild(b);
   body.appendChild(card);
